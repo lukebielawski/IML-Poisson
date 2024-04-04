@@ -5,6 +5,7 @@ from sympy import symbols, diff, Poly
 from sympy.polys.monomials import itermonomials
 from sympy.polys.orderings import monomial_key
 from sympy import *
+import itertools
 
 x1, x2, x3, x4 = symbols(' x1 x2 x3 x4', real=True)
 init_printing(use_unicode = True)
@@ -230,6 +231,76 @@ def checkComposite(first, second, degree, f):
     else:
         print("BAD")
 
-checkComposite(dpi0, dpi1, 4, 0)
+def bracketAndMaybeCheck(SC, degree):
+    n = degree
+    wumbo = list(itertools.combinations([1, 2, 3, 4], 2))
+    print(wumbo)
+    C = [[[0 for k in range(n)] for j in range(n)] for i in range(n)]
+    pi = [[0 for j in range(n)] for i in range(n)]
+    p = 0
+    for pair in itertools.combinations([1, 2, 3, 4], 2):
+        i = pair[0] - 1
+        j = pair[1] - 1
+        for k in range(degree):
+            C[i][j][k] = SC[p][k]
+            C[j][i][k] = -1*SC[p][k]
+            pi[i][j] += SC[p][k]
+        p += 1
+    print(pi)
+    return True
+
+def generateBivector(SC, dim):
+    pairs = list(itertools.combinations([1, 2, 3, 4], 2)) #4 depends on the dim
+    pi = [0 for i in range(len(pairs))]
+    for l in range(len(pairs)):
+        i = pairs[l][0] - 1
+        j = pairs[l][1] - 1
+        for k in range(dim):
+            pi[l] += SC[l][k]
+    print(pi)
+
+    return pi
+
+def checkPoisson(bivred, dim):
+    bivec = [[0 for j in range(dim)] for i in range(dim)]
+    pairs = list(itertools.combinations([1, 2, 3, 4], 2))
+    for l in range(len(pairs)):
+        i = pairs[l][0] - 1
+        j = pairs[l][1] - 1
+        bivec[i][j] = bivred[l]
+        bivec[j][i] = -1*bivred[l]
+    print(bivec)
+    triples = list(itertools.combinations([1, 2, 3, 4], 3)) #4 depends on the dim
+    v = [x1, x2, x3, x4]
+    for triple in triples:
+        i = triple[0] - 1
+        j = triple[1] - 1
+        k = triple[2] - 1
+        sum = 0
+        for l in range(dim):
+            xl = v[l]
+            sum += bivec[i][l]*diff(bivec[j][k], xl) + bivec[j][l]*diff(bivec[k][i], xl) + bivec[k][l]*diff(bivec[i][j], xl)
+        if sum == 0:
+            print("hooray")
+        else:
+            print("bad")
+
+#checkComposite(dpi2, dpi3, 4, 2)
 #kerdn(1, 4, dpi1)
 #imdn(0, 4, dpi0)
+
+SC1 = [[0 ,0, 0, 0],
+      [0, 0, 0, 0],
+      [b*x1, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 1*x2, 0, 0],
+      [0, 1*x2, 1*x3, 0]]
+SC2 = [[0 ,0, 0, 0], #random guy online (g, 4.4)
+       [0 ,0, 0, 0],
+       [x1 ,0, 0, 0],
+       [0 ,0, 0, 0],
+       [0 ,x1 + x2, 0, 0],
+       [0 ,0, x2 + x3, 0],]
+
+pi = generateBivector(SC2, 4)
+checkPoisson(pi, 4)
