@@ -162,7 +162,7 @@ def processNullspace(N, degree, basis, numInp, map): #does the printing output
         else:
             print("uh oh")
         print("_______")
-    print("number of terms: " + str(len(N)))
+    print("number of terms (kernel, terms degree " + str(degree) + ", map is " + str(map) + "): " + str(len(N)))
     print("all done")
     return True
 
@@ -217,7 +217,7 @@ def processImage(N, degree, basis, numInp, map, nextMap): #does the printing out
             if (v != 0):
                 print("IMAGE NOT IN KERNEL!!! ABORT!!!")
 
-    print("number of terms: " + str(len(N)))
+    print("number of terms (image, terms degree " + str(degree) + ", map is " + str(map) + "): " + str(len(N)))
     print("all done")
     return True
 
@@ -244,5 +244,5 @@ def checkComposite(first, second, degree, f):
 
 
 # checkComposite(dpi0, dpi1, 2, 0)
-kerdn(1, 2, dpi1)
 imdn(0, 2, dpi0, dpi1)
+kerdn(1, 2, dpi1)
