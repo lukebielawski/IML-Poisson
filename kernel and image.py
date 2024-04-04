@@ -10,6 +10,7 @@ x1, x2, x3, x4 = symbols(' x1 x2 x3 x4', real=True)
 init_printing(use_unicode = True)
 
 b = 4 #beta parameter
+# Testing git
 
 def picker(vals, val, k): #assigns the value to the k'th element of vals
     temp = np.empty(len(vals), sympy.core.power.Pow)
