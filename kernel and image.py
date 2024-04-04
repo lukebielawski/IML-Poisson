@@ -10,7 +10,7 @@ import itertools
 x1, x2, x3, x4 = symbols(' x1 x2 x3 x4', real=True)
 init_printing(use_unicode = True)
 
-b = 4 #beta parameter
+b = -1 #beta parameter
 
 def picker(vals, val, k): #assigns the value to the k'th element of vals
     temp = np.empty(len(vals), sympy.core.power.Pow)
@@ -20,7 +20,6 @@ def picker(vals, val, k): #assigns the value to the k'th element of vals
         else:
             temp[i] = 0
     return temp
-
 
 def dp0peter(vals):
     f = vals[0]
@@ -164,12 +163,12 @@ def processNullspace(N, degree, basis, numInp, map): #does the printing output
         else:
             print("uh oh")
         print("_______")
-    print("number of terms: " + str(len(N)))
+    print("number of terms (kernel, terms degree " + str(degree) + ", map is " + str(map) + "): " + str(len(N)))
     print("all done")
     return True
 
 #just copied dmitry code
-def imdn(n, degree, map): #dpi_n and map need to agree (will get outofbounds though) 
+def imdn(n, degree, map, nextMap): #dpi_n and map need to agree (will get outofbounds though) 
     numInp = math.comb(4, n) #number of input partials
     inputFunc = np.empty(numInp)
 
@@ -187,9 +186,9 @@ def imdn(n, degree, map): #dpi_n and map need to agree (will get outofbounds tho
                 for polz in basis:
                     coeff = applied[i].coeff_monomial(polz) #extract the relevant coefficient
                     outputVec = np.append(outputVec, coeff)
-    N = returnImage(outputVec, terms, numInp, numOut) 
-    processImage(N, degree, basis, numOut, map)
-    return True
+    N = returnImage(outputVec, terms, numInp, numOut)
+    processImage(N, degree, basis, numOut, map, nextMap)
+    return N
 
 def returnImage(bigVec, terms, inp, out): #reshapes big list into proper matrix and returns image
     temp = bigVec.reshape(inp * terms, out * terms)
@@ -197,20 +196,29 @@ def returnImage(bigVec, terms, inp, out): #reshapes big list into proper matrix 
     M = Matrix(temp)
     return M.columnspace()
 
-def processImage(N, degree, basis, numInp, map): #does the printing output
+def processImage(N, degree, basis, numInp, map, nextMap): #does the printing output
     terms = len(basis)
     for j in range(len(N)): #for each vector in the image
         for i in range(numInp):
             k = N[j][terms*i:terms*(i+1)] #print it out per partial
             print(k)
         temp = np.empty(numInp, sympy.core.power.Pow)
+        actualVec = [0]*numInp
+        # print(actualVec)
         for h in range(0, numInp):
             asPoly = 0
             for l in range(terms):
                 asPoly += N[j][l + terms*h]*basis[l]
             print(asPoly)
+            actualVec[h] = asPoly
         print("_______")
-    print("number of terms: " + str(len(N)))
+
+        result = nextMap(actualVec)
+        for v in result:
+            if (v != 0):
+                print("IMAGE NOT IN KERNEL!!! ABORT!!!")
+
+    print("number of terms (image, terms degree " + str(degree) + ", map is " + str(map) + "): " + str(len(N)))
     print("all done")
     return True
 
