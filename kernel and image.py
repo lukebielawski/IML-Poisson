@@ -221,9 +221,9 @@ def processImage(N, degree, basis, numInp, map, nextMap): #does the printing out
     print("all done")
     return True
 
-def checkComposite(first, second, degree, f):
+def checkComposite(first, second, degree, f): # degree is the degree of polynomial, f is the index of the first map
     partials = math.comb(4, f)
-    inputFunc = np.empty(partials)
+    inputFunc = np.empty(partials, sympy.core.power.Pow)
     basis = sorted(itermonomials([x1, x2, x3, x4], degree, degree), key=monomial_key('grlex', [x4, x3, x2, x1]))
     allGood = True
     for k in range(partials):
@@ -243,6 +243,6 @@ def checkComposite(first, second, degree, f):
 
 
 
-# checkComposite(dpi0, dpi1, 2, 0)
-imdn(0, 2, dpi0, dpi1)
-kerdn(1, 2, dpi1)
+checkComposite(dpi0, dpi1, 2, 0)
+# imdn(0, 2, dpi0, dpi1)
+# kerdn(1, 2, dpi1)
