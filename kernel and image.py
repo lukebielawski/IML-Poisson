@@ -293,6 +293,8 @@ def checkPoisson(bivred, dim):
         else:
             print("bad")
 
+
+
 #checkComposite(dpi2, dpi3, 4, 2)
 #kerdn(1, 4, dpi1)
 #imdn(0, 4, dpi0)
