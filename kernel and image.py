@@ -10,7 +10,7 @@ import itertools
 x1, x2, x3, x4 = symbols(' x1 x2 x3 x4', real=True)
 init_printing(use_unicode = True)
 
-b = -1 #beta parameter
+b = -4 #beta parameter
 
 def picker(vals, val, k): #assigns the value to the k'th element of vals
     temp = np.empty(len(vals), sympy.core.power.Pow)
@@ -269,15 +269,18 @@ def generateBivector(SC, dim):
 
     return pi
 
-def checkPoisson(bivred, dim):
-    bivec = [[0 for j in range(dim)] for i in range(dim)]
+def bivExpand(bivred):
+    bivec = [[0 for j in range(4)] for i in range(4)]
     pairs = list(itertools.combinations([1, 2, 3, 4], 2))
     for l in range(len(pairs)):
         i = pairs[l][0] - 1
         j = pairs[l][1] - 1
         bivec[i][j] = bivred[l]
         bivec[j][i] = -1*bivred[l]
-    print(bivec)
+    return bivec
+
+def checkPoisson(bivred):
+    bivec = bivExpand(bivred)
     triples = list(itertools.combinations([1, 2, 3, 4], 3)) #4 depends on the dim
     v = [x1, x2, x3, x4]
     for triple in triples:
@@ -285,7 +288,7 @@ def checkPoisson(bivred, dim):
         j = triple[1] - 1
         k = triple[2] - 1
         sum = 0
-        for l in range(dim):
+        for l in range(4):
             xl = v[l]
             sum += bivec[i][l]*diff(bivec[j][k], xl) + bivec[j][l]*diff(bivec[k][i], xl) + bivec[k][l]*diff(bivec[i][j], xl)
         if sum == 0:
@@ -312,14 +315,20 @@ SC2 = [[0 ,0, 0, 0], #random guy online (g, 4.4)
        [0 ,x1 + x2, 0, 0],
        [0 ,0, x2 + x3, 0],]
 
-pi = generateBivector(SC2, 4)
-checkPoisson(pi, 4)
+pi = generateBivector(SC1, 4)
+checkPoisson(pi)
 
+def scoutenWithFunction(bired, func): #func of x1 x2 x3 x4
+    bivec = bivExpand(bired)
+    output = [0 for i in range(4)]
+    v = [x1, x2, x3, x4]
+    for i in range(4):
+        for j in range(i, 4):
+            output[j] += bivec[i][j]*diff(func, v[i])
+            output[i] += -1*bivec[i][j]*diff(func, v[j])
+    return output
 
-
-
-
-
-checkComposite(dpi0, dpi1, 2, 0)
+f = symbols(' f ', real=True)
+print(scoutenWithFunction(pi, x3))
 # imdn(0, 2, dpi0, dpi1)
 # kerdn(1, 2, dpi1)
