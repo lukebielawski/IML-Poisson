@@ -10,7 +10,7 @@ import itertools
 x1, x2, x3, x4 = symbols(' x1 x2 x3 x4', real=True)
 init_printing(use_unicode = True)
 
-b = -4 #beta parameter
+b = 4 #beta parameter
 
 def picker(vals, val, k): #assigns the value to the k'th element of vals
     temp = np.empty(len(vals), sympy.core.power.Pow)
@@ -257,13 +257,13 @@ def bracketAndMaybeCheck(SC, degree):
     print(pi)
     return True
 
-def generateBivector(SC, dim):
-    pairs = list(itertools.combinations([1, 2, 3, 4], 2)) #4 depends on the dim
+def generateBivector(SC):
+    pairs = list(itertools.combinations([1, 2, 3, 4], 2))
     pi = [0 for i in range(len(pairs))]
     for l in range(len(pairs)):
         i = pairs[l][0] - 1
         j = pairs[l][1] - 1
-        for k in range(dim):
+        for k in range(4):
             pi[l] += SC[l][k]
     print(pi)
 
@@ -308,6 +308,7 @@ SC1 = [[0 ,0, 0, 0],
       [0, 0, 0, 0],
       [0, 1*x2, 0, 0],
       [0, 1*x2, 1*x3, 0]]
+
 SC2 = [[0 ,0, 0, 0], #random guy online (g, 4.4)
        [0 ,0, 0, 0],
        [x1 ,0, 0, 0],
@@ -315,7 +316,7 @@ SC2 = [[0 ,0, 0, 0], #random guy online (g, 4.4)
        [0 ,x1 + x2, 0, 0],
        [0 ,0, x2 + x3, 0],]
 
-pi = generateBivector(SC1, 4)
+pi = generateBivector(SC1)
 checkPoisson(pi)
 
 def scoutenWithFunction(bired, func): #func of x1 x2 x3 x4
@@ -326,9 +327,43 @@ def scoutenWithFunction(bired, func): #func of x1 x2 x3 x4
         for j in range(i, 4):
             output[j] += bivec[i][j]*diff(func, v[i])
             output[i] += -1*bivec[i][j]*diff(func, v[j])
+    print(output)
     return output
 
-f = symbols(' f ', real=True)
-print(scoutenWithFunction(pi, x3))
+def scoutenWithvectorfield(bired, X):
+    A = np.empty(3, sympy.core.power.Pow)
+    A[0] = bired[2]
+    A[1] = bired[4]
+    A[2] = bired[5]
+    outputExpand = [[0 for i in range(4)] for j in range(4)]
+    v = [x1, x2, x3, x4]
+    for i in range(3):
+        for j in range(4):
+            outputExpand[j][4 - 1] += A[i]*diff(X[j], v[i])
+            outputExpand[i][4 - 1] += -1*X[j]*diff(A[i], v[j])
+            outputExpand[j][i] += -1*A[i]*diff(X[j], v[4 - 1])
+    outputReduced = np.empty(6, sympy.core.power.Pow)
+    outputReduced[0] = outputExpand[1 - 1][2 - 1] - outputExpand[2 - 1][1 - 1]
+    outputReduced[1] = outputExpand[1 - 1][3 - 1] - outputExpand[3 - 1][1 - 1]
+    outputReduced[2] = outputExpand[1 - 1][4 - 1] - outputExpand[4 - 1][1 - 1]
+    outputReduced[3] = outputExpand[2 - 1][3 - 1] - outputExpand[3 - 1][2 - 1]
+    outputReduced[4] = outputExpand[2 - 1][4 - 1] - outputExpand[4 - 1][2 - 1]
+    outputReduced[5] = outputExpand[3 - 1][4 - 1] - outputExpand[4 - 1][3 - 1]
+    polytemp = np.array([])
+    for i in range(6):
+        polytemp = np.append(polytemp, Poly(outputReduced[i], x1, x2, x3,x4))
+    return polytemp
+
+def tempmp(X):
+    return scoutenWithvectorfield(pi, X)
+
+print(type(scoutenWithFunction(pi, x2**2 + x4)[2]))
+X = [x1**2, 0, 0, 0]
+scoutenWithvectorfield(pi, X)
+kerdn(1, 2, tempmp)
+print("_________________-")
+kerdn(1, 2, dpi1)
+
+
 # imdn(0, 2, dpi0, dpi1)
 # kerdn(1, 2, dpi1)
