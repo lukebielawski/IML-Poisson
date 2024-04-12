@@ -294,6 +294,7 @@ def checkPoisson(bivred):
     bivec = bivExpand(bivred)
     triples = list(itertools.combinations([1, 2, 3, 4], 3)) #4 depends on the dim
     v = [x1, x2, x3, x4]
+    allGood = True
     for triple in triples:
         i = triple[0] - 1
         j = triple[1] - 1
@@ -302,44 +303,29 @@ def checkPoisson(bivred):
         for l in range(4):
             xl = v[l]
             sum += bivec[i][l]*diff(bivec[j][k], xl) + bivec[j][l]*diff(bivec[k][i], xl) + bivec[k][l]*diff(bivec[i][j], xl)
-        if sum == 0:
-            print("hooray")
-        else:
-            print("bad")
+        if sum != 0:
+            allGood = False
+    if allGood:
+        print("Is Poisson")
 
 
 
-#checkComposite(dpi2, dpi3, 4, 2)
-#kerdn(1, 4, dpi1)
-#imdn(0, 4, dpi0)
-
-SC1 = [[0 ,0, 0, 0],
-      [0, 0, 0, 0],
-      [b*x1, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 1*x2, 0, 0],
-      [0, 1*x2, 1*x3, 0]]
-
-SC2 = [[0 ,0, 0, 0], #random guy online (g, 4.4)
-       [0 ,0, 0, 0],
-       [x1 ,0, 0, 0],
-       [0 ,0, 0, 0],
-       [0 ,x1 + x2, 0, 0],
-       [0 ,0, x2 + x3, 0],]
-
-pi = generateBivector(SC1)
-checkPoisson(pi)
-
-def scoutenWithFunction(bired, func): #func of x1 x2 x3 x4
+def scoutenWithFunction(bired, funcArray): #func of x1 x2 x3 x4
     bivec = bivExpand(bired)
+    func = funcArray[0]
     output = [0 for i in range(4)]
     v = [x1, x2, x3, x4]
     for i in range(4):
         for j in range(i, 4):
             output[j] += bivec[i][j]*diff(func, v[i])
             output[i] += -1*bivec[i][j]*diff(func, v[j])
-    print(output)
-    return output
+    temp = np.array([])
+    for i in range(4):
+        temp = np.append(temp, Poly(output[i], x1, x2, x3, x4))
+    return temp
+
+def dpi0LocalPi(X):
+    return scoutenWithFunction(pi, X)
 
 def scoutenWithvectorfield(bired, X):
     A = np.empty(3, sympy.core.power.Pow)
@@ -431,13 +417,21 @@ def dpi3LocalPi(X):
 
 
 
-kerdn(3, 2, dpi3LocalPi)
-print("______________AB___")
-print(" otihrjkwjl5th6lkwj45")
-kerdn(3, 2, dpi3)
 
-#Xij = [x1**2, x1**2, 0, 0, 0, 0]
-#scoutenWithBivectorField(pi, Xij)
 
-# imdn(0, 2, dpi0, dpi1)
-# kerdn(1, 2, dpi1)
+
+SC1 = [[0 ,0, 0, 0],
+      [0, 0, 0, 0],
+      [b*x1, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 1*x2, 0, 0],
+      [0, 1*x2, 1*x3, 0]]
+
+
+pi = generateBivector(SC1)
+checkPoisson(pi)
+
+checkComposite(dpi1LocalPi, dpi2LocalPi, 3, 1)
+kerdn(1, 2, dpi1LocalPi)
+imdn(0, 2, dpi0LocalPi, dpi1LocalPi)
+
