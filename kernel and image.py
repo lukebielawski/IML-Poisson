@@ -5,6 +5,8 @@ from sympy import symbols, diff, Poly
 from sympy.polys.monomials import itermonomials
 from sympy.polys.orderings import monomial_key
 from sympy import *
+from sympy.abc import x
+from sympy import RR
 import itertools
 
 x1, x2, x3, x4 = symbols(' x1 x2 x3 x4', real=True)
@@ -237,28 +239,9 @@ def checkComposite(first, second, degree, f): # degree is the degree of polynomi
             doubleApp = second(singleApp)
             if np.all(doubleApp != 0):
                 allGood = False
-    if allGood:
-        print("checks composition")
-    else:
-        print("BAD")
+    return allGood
 
-def bracketAndMaybeCheck(SC, degree):
-    n = degree
-    wumbo = list(itertools.combinations([1, 2, 3, 4], 2))
-    print(wumbo)
-    C = [[[0 for k in range(n)] for j in range(n)] for i in range(n)]
-    pi = [[0 for j in range(n)] for i in range(n)]
-    p = 0
-    for pair in itertools.combinations([1, 2, 3, 4], 2):
-        i = pair[0] - 1
-        j = pair[1] - 1
-        for k in range(degree):
-            C[i][j][k] = SC[p][k]
-            C[j][i][k] = -1*SC[p][k]
-            pi[i][j] += SC[p][k]
-        p += 1
-    print(pi)
-    return True
+
 
 def generateBivector(SC):
     pairs = list(itertools.combinations([1, 2, 3, 4], 2))
@@ -269,10 +252,9 @@ def generateBivector(SC):
         for k in range(4):
             pi[l] += SC[l][k]
     print(pi)
-
     return pi
 
-def bivExpand(bivred):
+def bivExpand(bivred): #length 6 array to 4 x 4 array
     bivec = [[0 for j in range(4)] for i in range(4)]
     pairs = list(itertools.combinations([1, 2, 3, 4], 2))
     for l in range(len(pairs)):
@@ -282,7 +264,7 @@ def bivExpand(bivred):
         bivec[j][i] = -1*bivred[l]
     return bivec
 
-def bivReduce(outputExpand):
+def bivReduce(outputExpand): #4 x 4 array to length 6 array
     outputReduced = np.empty(6, sympy.core.power.Pow)
     outputReduced[0] = outputExpand[1 - 1][2 - 1] - outputExpand[2 - 1][1 - 1]
     outputReduced[1] = outputExpand[1 - 1][3 - 1] - outputExpand[3 - 1][1 - 1]
@@ -295,7 +277,42 @@ def bivReduce(outputExpand):
         polytemp = np.append(polytemp, Poly(outputReduced[i], x1, x2, x3,x4))
     return polytemp
 
-def checkPoisson(bivred):
+def triVecExpand(triRed): #4 array to 4 x 4 x 4 array
+    triVec = [[[0 for i in range(4)] for j in range(4)] for k in range(4)]
+    trips = list(itertools.combinations([1, 2, 3, 4], 3))
+    for l in range(len(trips)):
+        i = trips[l][0] - 1
+        j = trips[l][1] - 1
+        k = trips[l][2] - 1
+        triVec[i][j][k] = triRed[l]
+    return triVec
+
+def triVecReduce(outputExpand): #4 x 4 x 4 array to length 4
+    outputReduced = np.empty(4, sympy.core.power.Pow)
+    a, b, c = 0, 1, 2
+    outputReduced[0] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
+    a, b, c = 0, 1, 3
+    outputReduced[1] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
+    a, b, c = 0, 2, 3
+    outputReduced[2] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
+    a, b, c = 1, 2, 3
+    outputReduced[3] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
+    polytemp = np.array([])
+    for i in range(4):
+        polytemp = np.append(polytemp, Poly(outputReduced[i], x1, x2, x3,x4))
+    return polytemp
+
+def quadVecReduce(outputExpand): #4 x 4 x 4 x 4 array to length 1
+    outputReduced = 0
+    outputReduced += outputExpand[0][1][2][3] - outputExpand[0][1][3][2] - outputExpand[0][2][1][3] + outputExpand[0][2][3][1] + outputExpand[0][3][1][2] - outputExpand[0][3][2][1]
+    outputReduced += -1*outputExpand[1][0][2][3] + outputExpand[1][0][3][2] + outputExpand[1][2][0][3] - outputExpand[1][2][3][0] - outputExpand[1][3][0][2] + outputExpand[1][3][2][0]
+    outputReduced += outputExpand[2][0][1][3] - outputExpand[2][0][3][1] - outputExpand[2][1][0][3] + outputExpand[2][1][3][0] - outputExpand[2][3][1][0] + outputExpand[2][3][0][1]
+    outputReduced += -1*outputExpand[3][0][1][2] + outputExpand[3][0][2][1] + outputExpand[3][1][0][2] - outputExpand[3][1][2][0] - outputExpand[3][2][0][1] + outputExpand[3][2][1][0]
+    temp = np.array([Poly(outputReduced, x1, x2, x3, x4)])
+    return temp
+
+
+def checkPoisson(bivred): #accepts length 6 array and outputs if its poisson
     bivec = bivExpand(bivred)
     triples = list(itertools.combinations([1, 2, 3, 4], 3)) #4 depends on the dim
     v = [x1, x2, x3, x4]
@@ -315,7 +332,7 @@ def checkPoisson(bivred):
 
 
 
-def scoutenWithFunction(bired, funcArray): #func of x1 x2 x3 x4
+def PiScoutenWithFunction(bired, funcArray): #func of x1 x2 x3 x4
     bivec = bivExpand(bired)
     func = funcArray[0]
     output = [0 for i in range(4)]
@@ -330,9 +347,9 @@ def scoutenWithFunction(bired, funcArray): #func of x1 x2 x3 x4
     return temp
 
 def dpi0LocalPi(X):
-    return scoutenWithFunction(pi, X)
+    return PiScoutenWithFunction(pi, X)
 
-def scoutenWithvectorfield(bired, X):
+def PiScoutenWithVF(bired, X):
     A = np.empty(3, sympy.core.power.Pow)
     A[0] = bired[2]
     A[1] = bired[4]
@@ -347,9 +364,9 @@ def scoutenWithvectorfield(bired, X):
     return bivReduce(outputExpand)
 
 def dpi1LocalPi(X):
-    return scoutenWithvectorfield(pi, X)
+    return PiScoutenWithVF(pi, X)
 
-def scoutenWithBivectorField(pibired, xbired):
+def PiScoutenWithBivec(pibired, xbired):
     X = bivExpand(xbired)
     A = np.empty(3, sympy.core.power.Pow)
     A[0] = pibired[2]
@@ -364,60 +381,13 @@ def scoutenWithBivectorField(pibired, xbired):
                 outputExpand[i][4 - 1][k] += -1*X[j][k]*diff(A[i], v[j])
                 outputExpand[i][4-1][j] += X[j][k]*diff(A[i], v[k])
                 outputExpand[j][i][k] += -1*A[i]*diff(X[j][k], v[4 - 1])
-    outputReduced = np.empty(4, sympy.core.power.Pow)
-    a, b, c = 0, 1, 2
-    outputReduced[0] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
-    a, b, c = 0, 1, 3
-    outputReduced[1] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
-    a, b, c = 0, 2, 3
-    outputReduced[2] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
-    a, b, c = 1, 2, 3
-    outputReduced[3] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
-    polytemp = np.array([])
-    for i in range(4):
-        polytemp = np.append(polytemp, Poly(outputReduced[i], x1, x2, x3,x4))
-    return polytemp
-def generalizedScoutenWithBivectorField(Xbired, Ybired):
-    X = bivExpand(Xbired)
-    Y = bivExpand(Ybired)
-    outputExpand = [[[0 for i in range(4)] for J in range(4)] for k in range(4)]
-    v = [x1, x2, x3, x4]
-    for i in range(4):
-        for j in range(4):
-            for k in range(4):
-                for l in range(4):
-                    outputExpand[k][l][j] += X[i][j]*diff(Y[k][l], v[i])
-                    outputExpand[i][l][j] -= Y[k][l]*diff(X[i][j], v[k])
-                    outputExpand[i][k][j] += Y[k][l]*diff(X[i][j], v[l])
-                    outputExpand[k][l][i] -= X[i][j]*diff(Y[k][l], v[j])
-    outputReduced = np.empty(4, sympy.core.power.Pow)
-    a, b, c = 0, 1, 2
-    outputReduced[0] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
-    a, b, c = 0, 1, 3
-    outputReduced[1] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
-    a, b, c = 0, 2, 3
-    outputReduced[2] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
-    a, b, c = 1, 2, 3
-    outputReduced[3] = outputExpand[a][b][c] - outputExpand[a][c][b] - outputExpand[b][a][c] + outputExpand[b][c][a] + outputExpand[c][a][b] - outputExpand[c][b][a]
-    polytemp = np.array([])
-    for i in range(4):
-        polytemp = np.append(polytemp, Poly(outputReduced[i], x1, x2, x3,x4))
-    return polytemp
+    return triVecReduce(outputExpand)
 
 def dpi2LocalPi(X):
-    return scoutenWithBivectorField(pi, X)
+    return PiScoutenWithBivec(pi, X)
 
-def triVecExpand(triRed): #only gives ""regular"" components (increasing partials)
-    triVec = [[[0 for i in range(4)] for j in range(4)] for k in range(4)]
-    trips = list(itertools.combinations([1, 2, 3, 4], 3))
-    for l in range(len(trips)):
-        i = trips[l][0] - 1
-        j = trips[l][1] - 1
-        k = trips[l][2] - 1
-        triVec[i][j][k] = triRed[l]
-    return triVec
 
-def scoutenWithTriVectorField(pi, triRed): #ASSUMES PI IS OF THE FORM E\wedge\partial_4
+def PiScoutenWithTrivec(pi, triRed): #ASSUMES PI IS OF THE FORM E\wedge\partial_4
     X = triVecExpand(triRed)
     A = np.empty(3, sympy.core.power.Pow)
     A[0] = pi[2]
@@ -434,17 +404,78 @@ def scoutenWithTriVectorField(pi, triRed): #ASSUMES PI IS OF THE FORM E\wedge\pa
                     outputExpand[i][4 - 1][j][l] += X[j][k][l]*diff(A[i], v[k])
                     outputExpand[i][4 - 1][j][k] += -1*X[j][k][l]*diff(A[i], v[l])
                     outputExpand[i][4 - 1][k][l] += -X[j][k][l]*diff(A[i], v[j])
-    outputReduced = 0
-    outputReduced += outputExpand[0][1][2][3] - outputExpand[0][1][3][2] + outputExpand[0][2][1][3] - outputExpand[0][2][3][1] + outputExpand[0][3][1][2] - outputExpand[0][3][2][1]
-    outputReduced += -1*outputExpand[1][0][2][3] + outputExpand[1][0][3][2] + outputExpand[1][2][0][3] - outputExpand[1][2][3][0] - outputExpand[1][3][0][2] + outputExpand[1][3][2][0]
-    outputReduced += outputExpand[2][0][1][3] - outputExpand[2][0][3][1] - outputExpand[2][1][0][3] + outputExpand[2][1][3][0] - outputExpand[2][3][1][0] + outputExpand[2][3][0][1]
-    outputReduced += -1*outputExpand[3][0][1][2] + outputExpand[3][0][2][1] + outputExpand[3][1][0][2] - outputExpand[3][1][2][0] - outputExpand[3][2][0][1] + outputExpand[3][2][1][0]
-    temp = np.array([Poly(outputReduced, x1, x2, x3, x4)])
-    return temp
+    return quadVecReduce(outputExpand)
 
 
 def dpi3LocalPi(X):
-    return scoutenWithTriVectorField(pi, X)
+    return PiScoutenWithTrivec(pi, X)
+
+def ScoutenVFfunc(X, f): #1, 0
+    output = 0
+    v = [x1, x2, x3, x4]
+    for i in range(4):
+        output += X[i]*diff(f, v[i])
+    return output
+
+def ScoutenTwoVF(X, Y): #1, 1
+    output = [0 for i in range(4)]
+    v = [x1, x2, x3, x4]
+    for i in range(4):
+        for j in range(4):
+            output[j] += X[i]*diff(Y[j], v[i])
+            output[i] += -1*Y[j]*diff(X[i], v[j])
+    return output
+
+def ScoutenBivecFunc(Xbired, f):
+    X = bivExpand(Xbired)
+    output = [0 for i in range(4)]
+    v = [x1, x2, x3, x4]
+    for i in range(4):
+        for j in range(4):
+            output[j] += X[i][j]*diff(f, v[i])
+            output[i] += -1*X[i][j]*diff(f, v[j])
+    return output
+
+def ScoutenBivecVF(Ybired, X): #2, 1
+    Y = bivExpand(Ybired)
+    outputExpand = [[0 for i in range(4)] for j in range(4)]
+    v = [x1, x2, x3, x4]
+    for i in range(4):
+        for j in range(4):
+            for k in range(4):
+                outputExpand[k][j] += Y[i][j]*diff(X[k], v[i])
+                outputExpand[i][j] += -1*X[k]*diff(Y[i][j], v[k])
+                outputExpand[k][i] += -1*Y[i][j]*diff(X[k], v[j])
+    return bivReduce(outputExpand)
+
+
+def ScoutenTwoBivec(Xbired, Ybired): #2, 2
+    X = bivExpand(Xbired)
+    Y = bivExpand(Ybired)
+    outputExpand = [[[0 for i in range(4)] for J in range(4)] for k in range(4)]
+    v = [x1, x2, x3, x4]
+    for i in range(4):
+        for j in range(4):
+            for k in range(4):
+                for l in range(4):
+                    outputExpand[k][l][j] += X[i][j]*diff(Y[k][l], v[i])
+                    outputExpand[i][l][j] -= Y[k][l]*diff(X[i][j], v[k])
+                    outputExpand[i][k][j] += Y[k][l]*diff(X[i][j], v[l])
+                    outputExpand[k][l][i] -= X[i][j]*diff(Y[k][l], v[j])
+    return triVecReduce(outputExpand)
+
+def ScoutenTriVecFunc(XtriVecred, f):
+    X = triVecExpand(XtriVecred)
+    outputExpand = [[0 for i in range(4)] for j in range(4)]
+    v = [x1, x2, x3, x4]
+    for i in range(4):
+        for j in range(4):
+            for k in range(4):
+                s = X[i][j][k]
+                outputExpand[j][k] += s*diff(f, v[i])
+                outputExpand[i][k] += -1*s*diff(f, v[j])
+                outputExpand[i][j] += s*diff(f, v[k])
+    return outputExpand
 
 def vectorToPolynomial(degreeVF, degree, vector):
     basis =  sorted(itermonomials([x1, x2, x3, x4], degree, degree), key=monomial_key('grlex', [x4, x3, x2, x1]))
@@ -487,13 +518,27 @@ checkPoisson(pi)
 #checkComposite(first, second, degree, numSecond)
 mapList = [dpi0LocalPi, dpi1LocalPi, dpi2LocalPi, dpi3LocalPi]
 
+def checkAllCompositions(dg):
+    allWorks = True
+    for i in range(3):
+        for j in range(dg+1):
+            if not (checkComposite(mapList[i], mapList[i+1], j,  i)):
+                allWorks = False
+    if allWorks:
+        print("all check")
+    else:
+        print("ruh roh")
+
+
 degree = 2
-hk = 1
+hk = 3
+
+checkAllCompositions(3)
 
 
 def outputDomainRange():
-    printMat = True
-    printBasis = false
+    printMat = false
+    printBasis = True
     kerdn(hk, degree, mapList[hk], printMat, printBasis)
     print("\n")
     if (hk !=0 ):
@@ -515,7 +560,7 @@ cohom = [(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -
  (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
  (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
  (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0)]
-outputCohomologyClass(cohom)
+#outputCohomologyClass(cohom)
 
 
 #copy paste the two matrices into Sage
@@ -527,3 +572,4 @@ outputCohomologyClass(cohom)
 #[Q.lift(b) for b in Q.basis()]
 #should return basis for the cohomology class as vectors
 #copy paste the list of lists here and then you have to make it a list not tuples
+ar = RR.old_poly_ring(x).free_module(x1,x2,x3,x4); ar
