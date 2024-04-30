@@ -263,17 +263,19 @@ def bivExpand(bivred): #length 6 array to 4 x 4 array
     return bivec
 
 def bivReduce(outputExpand): #4 x 4 array to length 6 array
-    outputReduced = np.empty(6, sympy.core.power.Pow)
+    #outputReduced = np.empty(6, sympy.core.power.Pow) CHANGED at 4pm ON 4/30 IDK IF EVERYTHING BREAKS
+    outputReduced = [0 for i in range(6)]
     outputReduced[0] = outputExpand[1 - 1][2 - 1] - outputExpand[2 - 1][1 - 1]
     outputReduced[1] = outputExpand[1 - 1][3 - 1] - outputExpand[3 - 1][1 - 1]
     outputReduced[2] = outputExpand[1 - 1][4 - 1] - outputExpand[4 - 1][1 - 1]
     outputReduced[3] = outputExpand[2 - 1][3 - 1] - outputExpand[3 - 1][2 - 1]
     outputReduced[4] = outputExpand[2 - 1][4 - 1] - outputExpand[4 - 1][2 - 1]
     outputReduced[5] = outputExpand[3 - 1][4 - 1] - outputExpand[4 - 1][3 - 1]
-    polytemp = np.array([])
-    for i in range(6):
-        polytemp = np.append(polytemp, Poly(outputReduced[i], x1, x2, x3,x4))
-    return polytemp
+    #polytemp = np.array([])
+    #for i in range(6):
+        #polytemp = np.append(polytemp, Poly(outputReduced[i], x1, x2, x3,x4))
+    #return polytemp
+    return outputReduced
 
 def triVecExpand(triRed): #4 array to 4 x 4 x 4 array
     triVec = [[[0 for i in range(4)] for j in range(4)] for k in range(4)]
@@ -475,6 +477,13 @@ def ScoutenTriVecFunc(XtriVecred, f):
                 outputExpand[i][j] += s*diff(f, v[k])
     return outputExpand
 
+def wedgeTwoVF(X, Y):
+    outputExpand = [[0 for i in range(4)] for j in range(4)]
+    for i in range(4):
+        for j in range(4):
+            outputExpand[i][j] += X[i]*Y[j]
+    return bivReduce(outputExpand)
+
 def vectorToPolynomial(degreeVF, degree, vector):
     basis =  sorted(itermonomials([x1, x2, x3, x4], degree, degree), key=monomial_key('grlex', [x4, x3, x2, x1]))
     terms = len(basis)
@@ -528,15 +537,15 @@ def checkAllCompositions(dg):
         print("ruh roh")
 
 
-degree = 2
-hk = 3
+degree = 1
+hk = 1
 
-checkAllCompositions(3)
+#checkAllCompositions(3)
 
 
 def outputDomainRange():
-    printMat = false
-    printBasis = True
+    printMat = True
+    printBasis = False
     kerdn(hk, degree, mapList[hk], printMat, printBasis)
     print("\n")
     if (hk !=0 ):
@@ -545,22 +554,29 @@ def outputDomainRange():
 
 def outputCohomologyClass(inp):
     CohomologyList = inp
+    takeout = [0 for i in range(len(CohomologyList))]
+    i=0
     for vec in CohomologyList:
         polyRep = vectorToPolynomial(hk, degree, list(vec)) #degree of vectorfield and then degree of polynomial
+        takeout[i] = polyRep
+        i += 1
         print(polyRep)
         print("_____")
+    return takeout
 
 #outputDomainRange()
 
-cohom = [(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0),
- (0, 0, 1, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -3, 0),
- (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0),
- (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
- (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
- (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0)]
-#outputCohomologyClass(cohom)
+cohom = [(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1),
+ (0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, -1),
+ (0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
+ (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0)]
 
-
+listOfVec = outputCohomologyClass(cohom)
+for i in range(len(listOfVec)):
+    for j in range(i+1):
+        print(listOfVec[i], listOfVec[j])
+        print(wedgeTwoVF(listOfVec[i], listOfVec[j]))
+        print("\n")
 #copy paste the two matrices into Sage
 #A = 
 #B = 
